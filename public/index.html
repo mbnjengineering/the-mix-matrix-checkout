@@ -22,53 +22,29 @@
           </a>
           <p class="eyebrow">Instant project total</p>
           <h1 id="page-title">Your sound, mapped out.</h1>
-          <p class="intro">Set your song count, choose the services you need, and see your exact project total before secure Stripe Checkout.</p>
+          <p class="intro">Build your project service by service, see the exact total, and move straight to secure Stripe Checkout.</p>
         </header>
 
         <noscript><p class="notice error">This calculator needs JavaScript enabled to create a secure Stripe checkout.</p></noscript>
         <p id="load-message" class="notice" role="status">Loading services…</p>
 
         <form id="booking-form" novalidate hidden>
-          <section class="form-section song-section" aria-labelledby="song-count-heading">
+          <section class="form-section" aria-labelledby="services-heading">
             <div class="section-heading">
               <p class="step">01</p>
               <div>
-                <h2 id="song-count-heading">How many songs?</h2>
-                <p>Volume discounts are based on the project’s song count.</p>
+                <h2 id="services-heading">Build your project</h2>
+                <p>Set a quantity beside every service you need. You can mix different song types in the same project.</p>
               </div>
             </div>
-            <label class="song-count-control" for="song-count">
-              <span>Project songs</span>
-              <input id="song-count" name="song-count" type="number" inputmode="numeric" min="1" max="99" step="1" value="1" required />
-              <small id="discount-progress" aria-live="polite">Add 2 more songs to unlock 5% off.</small>
-            </label>
-          </section>
-
-          <section class="form-section" aria-labelledby="services-heading">
-            <div class="section-heading">
-              <p class="step">02</p>
-              <div>
-                <h2 id="services-heading">Choose your mix</h2>
-                <p>Pick one mix type, or skip this step for a mastering- or Dolby-only project.</p>
-              </div>
-            </div>
-            <div id="primary-services" class="service-list" aria-live="polite"></div>
-          </section>
-
-          <section class="form-section" aria-labelledby="addons-heading">
-            <div class="section-heading">
-              <p class="step">03</p>
-              <div>
-                <h2 id="addons-heading">Add-ons</h2>
-                <p>Add mastering and/or Dolby Atmos to every project song—or book either one by itself.</p>
-              </div>
-            </div>
-            <div id="addon-services" class="service-list" aria-live="polite"></div>
+            <div id="services" class="service-list" aria-live="polite"></div>
+            <p id="discount-progress" class="discount-progress" aria-live="polite"></p>
+            <p class="service-guidance">Mastering is included with every Multi track/Stem and 2track mix. Select <strong>Mastering only</strong> for songs that do not need mixing. Dolby Atmos can be booked by itself or alongside a mix.</p>
           </section>
 
           <section class="form-section client-section" aria-labelledby="details-heading">
             <div class="section-heading">
-              <p class="step">04</p>
+              <p class="step">02</p>
               <div>
                 <h2 id="details-heading">Tell me about the project</h2>
                 <p>These details are attached securely to your Stripe payment.</p>
@@ -94,15 +70,15 @@
           <aside class="total-card" aria-labelledby="total-heading">
             <div class="total-header">
               <div>
-                <p class="step">05</p>
+                <p class="step">03</p>
                 <h2 id="total-heading">Your project total</h2>
               </div>
               <p id="total" class="total" aria-live="polite">$0.00</p>
             </div>
             <div id="line-items" class="line-items"><p class="empty-state">Choose one or more services to see your itemized total.</p></div>
-            <div class="total-row"><span id="discount-label">Volume discount</span><span id="discount">$0.00</span></div>
+            <div class="total-row"><span id="discount-label">Eligible savings</span><span id="discount">$0.00</span></div>
             <div class="total-row grand-total"><span>Total due today</span><span id="total-copy">$0.00</span></div>
-            <p class="checkout-note">Prices and volume discounts are confirmed securely on the server before Stripe Checkout opens.</p>
+            <p class="checkout-note">For 1–2 mix songs, Dolby added to the mix receives 5% off. At 3+ mix songs, the better volume discount automatically applies instead. Prices are confirmed securely on the server before Stripe Checkout opens.</p>
             <button id="checkout-button" class="checkout-button" type="submit" disabled>
               Continue to secure payment <span aria-hidden="true">→</span>
             </button>

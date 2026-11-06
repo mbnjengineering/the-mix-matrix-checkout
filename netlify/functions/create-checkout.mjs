@@ -23,9 +23,9 @@ function metadataFor(purchase, quote) {
   return {
     customer_name: purchase.customerName,
     customer_email: purchase.customerEmail,
-    song_count: String(quote.songCount),
+    mix_song_count: String(quote.mixSongCount),
     services: quote.lineItems.map((item) => `${item.name} x${item.quantity}`).join(" | "),
-    discount_percent: String(quote.discountPercent),
+    discount_summary: quote.discountSummary || "none",
     discount_usd: (quote.discountCents / 100).toFixed(2),
     total_usd: (quote.totalCents / 100).toFixed(2),
     ...projectDetailMetadata(purchase.projectDetails)
@@ -44,7 +44,7 @@ export async function handler(event) {
   try {
     const payload = JSON.parse(event.body || "{}");
     const purchase = validatePurchase(payload);
-    const quote = quoteFor({ requestedItems: purchase.items, songCount: purchase.songCount });
+    const quote = quoteFor({ requestedItems: purchase.items });
     const metadata = metadataFor(purchase, quote);
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const siteUrl = publicSiteUrl(event);
@@ -59,13 +59,13 @@ export async function handler(event) {
         quantity: item.quantity,
         price_data: {
           currency: quote.currency,
-          // The approved volume discount is applied here on the server, so the
-          // Checkout total cannot be changed by the browser.
-          unit_amount: Math.round(item.unitAmountCents * (100 - quote.discountPercent) / 100),
+          // Every price and eligible discount is calculated on the server, so
+          // the Checkout total cannot be changed by the browser.
+          unit_amount: item.checkoutUnitAmountCents,
           product_data: {
             name: item.name,
-            description: quote.discountPercent > 0
-              ? `${item.unitLabel}; ${quote.discountPercent}% volume discount included`
+            description: item.discountPercent > 0
+              ? `${item.unitLabel}; ${item.discountPercent}% ${item.discountReason === "volume" ? "volume" : "Dolby add-on"} discount included`
               : item.unitLabel
           }
         }
@@ -90,8 +90,7 @@ export async function handler(event) {
     if (error instanceof Error && (
       error.message.includes("Choose at least one") ||
       error.message.includes("unavailable service") ||
-      error.message.includes("Song count") ||
-      error.message.includes("primary mix type") ||
+      error.message.includes("service quantity") ||
       error.message.includes("only be sent once")
     )) {
       return reply(400, { error: error.message });

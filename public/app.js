@@ -1,8 +1,6 @@
 const form = document.querySelector("#booking-form");
-const primaryServicesElement = document.querySelector("#primary-services");
-const addonServicesElement = document.querySelector("#addon-services");
+const servicesElement = document.querySelector("#services");
 const loadMessage = document.querySelector("#load-message");
-const songCountField = document.querySelector("#song-count");
 const discountProgress = document.querySelector("#discount-progress");
 const lineItemsElement = document.querySelector("#line-items");
 const totalElement = document.querySelector("#total");
@@ -16,49 +14,144 @@ const formMessage = document.querySelector("#form-message");
 const customProjectLink = document.querySelector("#custom-project-link");
 
 let catalog;
+const quantities = new Map();
 
 function money(cents) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 }
 
-function songCount() {
-  const value = Number(songCountField.value);
-  return Number.isSafeInteger(value) && value >= 1 && value <= 99 ? value : 0;
+function quantityFor(serviceId) {
+  return quantities.get(serviceId) || 0;
 }
 
-function selectedItems() {
-  return catalog.services.filter((service) => document.querySelector(`[data-service="${service.id}"]`).checked);
+function selectedEntries() {
+  return catalog.services
+    .map((service) => ({ service, quantity: quantityFor(service.id) }))
+    .filter(({ quantity }) => quantity > 0);
 }
 
-function discountFor(currentSongCount) {
-  return catalog.discounts.find((tier) => currentSongCount >= tier.minSongs) || { percent: 0 };
+function mixSongCount(entries) {
+  return entries
+    .filter(({ service }) => service.serviceType === "mix")
+    .reduce((sum, { quantity }) => sum + quantity, 0);
 }
 
-function updateDiscountProgress(currentSongCount) {
-  if (currentSongCount < 3) {
-    const remaining = 3 - currentSongCount;
-    discountProgress.textContent = `Add ${remaining} more ${remaining === 1 ? "song" : "songs"} to unlock 5% off.`;
-  } else if (currentSongCount < 5) {
-    const remaining = 5 - currentSongCount;
-    discountProgress.textContent = `5% off unlocked. Add ${remaining} more ${remaining === 1 ? "song" : "songs"} to unlock 15% off.`;
+function volumeDiscountFor(currentMixSongCount) {
+  return catalog.discounts.find((tier) => currentMixSongCount >= tier.minMixSongs)?.percent || 0;
+}
+
+function quotedLineItem({ service, quantity, name = service.name, discountPercent = 0, discountReason = "" }) {
+  const unitAmountCents = service.unitAmountCents;
+  const checkoutUnitAmountCents = Math.round(unitAmountCents * (100 - discountPercent) / 100);
+  return {
+    id: service.id,
+    name,
+    quantity,
+    unitAmountCents,
+    amountCents: unitAmountCents * quantity,
+    chargedAmountCents: checkoutUnitAmountCents * quantity,
+    discountPercent,
+    discountReason
+  };
+}
+
+// This mirrors the display only. Netlify recalculates the same selection before
+// it creates Stripe Checkout, so a browser cannot decide the payable amount.
+function clientQuote() {
+  const entries = selectedEntries();
+  const currentMixSongCount = mixSongCount(entries);
+  const volumeDiscountPercent = volumeDiscountFor(currentMixSongCount);
+  const lineItems = [];
+
+  for (const { service, quantity } of entries) {
+    if (service.serviceType !== "dolby") {
+      lineItems.push(quotedLineItem({
+        service,
+        quantity,
+        discountPercent: volumeDiscountPercent,
+        discountReason: volumeDiscountPercent > 0 ? "volume" : ""
+      }));
+      continue;
+    }
+
+    if (volumeDiscountPercent > 0) {
+      lineItems.push(quotedLineItem({
+        service,
+        quantity,
+        discountPercent: volumeDiscountPercent,
+        discountReason: "volume"
+      }));
+      continue;
+    }
+
+    const addOnQuantity = Math.min(quantity, currentMixSongCount);
+    if (addOnQuantity > 0) {
+      lineItems.push(quotedLineItem({
+        service,
+        name: "Dolby-Atmos add-on",
+        quantity: addOnQuantity,
+        discountPercent: catalog.dolbyAddOnDiscountPercent,
+        discountReason: "dolby_add_on"
+      }));
+    }
+
+    const standaloneQuantity = quantity - addOnQuantity;
+    if (standaloneQuantity > 0) {
+      lineItems.push(quotedLineItem({
+        service,
+        name: currentMixSongCount > 0 ? "Dolby-Atmos only" : service.name,
+        quantity: standaloneQuantity
+      }));
+    }
+  }
+
+  const subtotalCents = lineItems.reduce((sum, item) => sum + item.amountCents, 0);
+  const totalCents = lineItems.reduce((sum, item) => sum + item.chargedAmountCents, 0);
+  const discountCents = subtotalCents - totalCents;
+  const discountSummary = volumeDiscountPercent > 0
+    ? `${volumeDiscountPercent}% ${currentMixSongCount}-song volume discount`
+    : lineItems.some((item) => item.discountReason === "dolby_add_on")
+      ? `${catalog.dolbyAddOnDiscountPercent}% Dolby Atmos add-on discount`
+      : "";
+
+  return { entries, currentMixSongCount, lineItems, subtotalCents, totalCents, discountCents, discountSummary };
+}
+
+function updateDiscountProgress(currentMixSongCount) {
+  if (currentMixSongCount < 3) {
+    const remaining = 3 - currentMixSongCount;
+    discountProgress.textContent = `Add ${remaining} more mix ${remaining === 1 ? "song" : "songs"} to unlock 5% off your whole project.`;
+  } else if (currentMixSongCount < 5) {
+    const remaining = 5 - currentMixSongCount;
+    discountProgress.textContent = `5% off your whole project is applied. Add ${remaining} more mix ${remaining === 1 ? "song" : "songs"} to unlock 15% off.`;
   } else {
-    discountProgress.textContent = "15% volume discount unlocked.";
+    discountProgress.textContent = "15% off your whole project is applied.";
   }
 }
 
-function createServiceCard(service) {
-  const row = document.createElement("label");
+function updateServiceRow(service) {
+  const quantity = quantityFor(service.id);
+  const row = document.querySelector(`[data-service-row="${service.id}"]`);
+  const output = document.querySelector(`[data-quantity-value="${service.id}"]`);
+  const decreaseButton = document.querySelector(`[data-decrease="${service.id}"]`);
+  const increaseButton = document.querySelector(`[data-increase="${service.id}"]`);
+  row.classList.toggle("is-selected", quantity > 0);
+  output.value = String(quantity);
+  output.textContent = String(quantity);
+  decreaseButton.disabled = quantity === 0;
+  increaseButton.disabled = quantity === 99;
+}
+
+function setQuantity(service, nextQuantity) {
+  quantities.set(service.id, Math.min(99, Math.max(0, nextQuantity)));
+  updateServiceRow(service);
+  updateQuote();
+}
+
+function createServiceRow(service) {
+  const row = document.createElement("div");
   row.className = "service-row";
-
-  const selector = document.createElement("input");
-  selector.type = service.selectionType === "primary" ? "radio" : "checkbox";
-  if (service.selectionType === "primary") selector.name = "primary-mix";
-  selector.dataset.service = service.id;
-  selector.setAttribute("aria-label", `${service.selectionType === "primary" ? "Choose" : "Add"} ${service.name}`);
-
-  const indicator = document.createElement("span");
-  indicator.className = `checkbox-indicator ${service.selectionType === "primary" ? "radio-indicator" : ""}`;
-  indicator.setAttribute("aria-hidden", "true");
+  row.dataset.serviceRow = service.id;
 
   const name = document.createElement("div");
   name.className = "service-name";
@@ -67,79 +160,80 @@ function createServiceCard(service) {
   const title = document.createElement("h3");
   title.textContent = service.name;
   titleLine.append(title);
-  if (service.isAddOn) {
+  if (service.masteringIncluded) {
     const badge = document.createElement("span");
-    badge.className = "addon-badge";
-    badge.textContent = "Add-on";
+    badge.className = "included-badge";
+    badge.textContent = "Mastering included";
     titleLine.append(badge);
   }
-  const rate = document.createElement("p");
-  rate.textContent = `${money(service.unitAmountCents)} ${service.unitLabel}`;
-  name.append(titleLine, rate);
+  const description = document.createElement("p");
+  description.textContent = `${money(service.unitAmountCents)} ${service.unitLabel} · ${service.description}`;
+  name.append(titleLine, description);
 
-  const action = document.createElement("span");
-  action.className = "service-action";
-  action.textContent = service.selectionType === "primary" ? "Choose" : "Add";
+  const quantityControl = document.createElement("div");
+  quantityControl.className = "quantity-control";
+  quantityControl.setAttribute("aria-label", `${service.name} quantity`);
+  const decrease = document.createElement("button");
+  decrease.type = "button";
+  decrease.className = "quantity-button";
+  decrease.dataset.decrease = service.id;
+  decrease.setAttribute("aria-label", `Remove one ${service.name}`);
+  decrease.textContent = "−";
+  const output = document.createElement("output");
+  output.className = "quantity-value";
+  output.dataset.quantityValue = service.id;
+  output.setAttribute("aria-label", `${service.name} quantity`);
+  output.setAttribute("aria-live", "polite");
+  const increase = document.createElement("button");
+  increase.type = "button";
+  increase.className = "quantity-button";
+  increase.dataset.increase = service.id;
+  increase.setAttribute("aria-label", `Add one ${service.name}`);
+  increase.textContent = "+";
 
-  selector.addEventListener("change", () => {
-    if (service.selectionType === "primary") {
-      for (const primary of catalog.services.filter((item) => item.selectionType === "primary")) {
-        const primaryAction = document.querySelector(`[data-service="${primary.id}"]`).closest("label").querySelector(".service-action");
-        primaryAction.textContent = document.querySelector(`[data-service="${primary.id}"]`).checked ? "Chosen" : "Choose";
-      }
-    } else {
-      action.textContent = selector.checked ? "Added" : "Add";
-    }
-    updateQuote();
-  });
-
-  row.append(selector, indicator, name, action);
+  decrease.addEventListener("click", () => setQuantity(service, quantityFor(service.id) - 1));
+  increase.addEventListener("click", () => setQuantity(service, quantityFor(service.id) + 1));
+  quantityControl.append(decrease, output, increase);
+  row.append(name, quantityControl);
   return row;
 }
 
 function renderServices() {
-  primaryServicesElement.replaceChildren();
-  addonServicesElement.replaceChildren();
+  servicesElement.replaceChildren();
   for (const service of catalog.services) {
-    const card = createServiceCard(service);
-    (service.selectionType === "primary" ? primaryServicesElement : addonServicesElement).append(card);
+    quantities.set(service.id, 0);
+    servicesElement.append(createServiceRow(service));
+    updateServiceRow(service);
   }
 }
 
 function updateQuote() {
-  const items = selectedItems();
-  const currentSongCount = songCount();
-  const subtotal = items.reduce((sum, item) => sum + (item.unitAmountCents * currentSongCount), 0);
-  const discount = discountFor(currentSongCount);
-  const discountCents = Math.round(subtotal * discount.percent / 100);
-  const total = subtotal - discountCents;
-  const hasItems = items.length > 0;
+  const quote = clientQuote();
+  const hasItems = quote.entries.length > 0;
 
-  updateDiscountProgress(currentSongCount);
-  totalElement.textContent = money(total);
-  totalCopyElement.textContent = money(total);
-  discountElement.textContent = discountCents > 0 ? `−${money(discountCents)}` : "$0.00";
-  discountLabelElement.textContent = discount.percent > 0
-    ? `${currentSongCount}-song volume discount (${discount.percent}%)`
-    : "Volume discount (3+ songs)";
-  checkoutButton.disabled = !hasItems || currentSongCount === 0;
+  updateDiscountProgress(quote.currentMixSongCount);
+  totalElement.textContent = money(quote.totalCents);
+  totalCopyElement.textContent = money(quote.totalCents);
+  discountElement.textContent = quote.discountCents > 0 ? `−${money(quote.discountCents)}` : "$0.00";
+  discountLabelElement.textContent = quote.discountSummary || "Eligible savings";
+  checkoutButton.disabled = !hasItems;
   lineItemsElement.replaceChildren();
 
   if (!hasItems) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "Choose a mix, an add-on, or both to see your itemized total.";
+    empty.textContent = "Add a quantity to one or more services to see your itemized total.";
     lineItemsElement.append(empty);
     return;
   }
 
-  for (const item of items) {
+  for (const item of quote.lineItems) {
     const row = document.createElement("div");
     row.className = "line-item";
     const left = document.createElement("span");
-    left.textContent = `${item.name} × ${currentSongCount}`;
+    left.textContent = `${item.name} × ${item.quantity}`;
     const right = document.createElement("span");
-    right.textContent = money(item.unitAmountCents * currentSongCount);
+    right.textContent = money(item.amountCents);
     row.append(left, right);
     lineItemsElement.append(row);
   }
@@ -149,8 +243,6 @@ function setError(message) {
   formMessage.textContent = message;
 }
 
-songCountField.addEventListener("input", updateQuote);
-songCountField.addEventListener("change", updateQuote);
 detailField.addEventListener("input", () => {
   detailCount.textContent = detailField.value.length;
 });
@@ -158,19 +250,22 @@ detailField.addEventListener("input", () => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   setError("");
-
   if (!form.reportValidity()) return;
+
+  const quote = clientQuote();
+  if (quote.entries.length === 0) {
+    setError("Add at least one service quantity before continuing.");
+    return;
+  }
 
   const originalButtonText = checkoutButton.innerHTML;
   checkoutButton.disabled = true;
   checkoutButton.textContent = "Opening secure checkout…";
-
   const payload = {
     customerName: document.querySelector("#customer-name").value,
     customerEmail: document.querySelector("#customer-email").value,
     projectDetails: detailField.value,
-    songCount: songCount(),
-    items: selectedItems().map(({ id }) => ({ id }))
+    items: quote.entries.map(({ service, quantity }) => ({ id: service.id, quantity }))
   };
 
   try {

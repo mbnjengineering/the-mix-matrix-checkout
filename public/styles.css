@@ -60,36 +60,29 @@ form { margin-top: 39px; }
 .section-heading { display: flex; align-items: flex-start; gap: 14px; }
 .section-heading h2, .total-card h2 { margin: 3px 0 5px; color: #f0f0f1; font-size: 1.1rem; letter-spacing: -0.025em; }
 .section-heading p:not(.step) { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.4; }
-.song-count-control { display: grid; grid-template-columns: auto 94px; align-items: center; gap: 8px 18px; max-width: 430px; margin: 24px 0 0 30px; }
-.song-count-control > span { color: var(--text); font-size: 0.94rem; }
-.song-count-control input { grid-column: 2; grid-row: 1; width: 94px; padding: 10px; border: 1px solid rgba(217, 217, 217, 0.28); border-radius: 8px; outline: none; color: var(--text); background: var(--ink); font-size: 1rem; font-weight: 700; text-align: center; }
-.song-count-control input:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px rgba(165, 171, 100, 0.17); }
-.song-count-control small { grid-column: 1 / -1; color: var(--muted); font-size: 0.76rem; font-weight: 400; }
-
 .service-list { display: grid; gap: 8px; margin-top: 24px; }
-.service-row { position: relative; display: flex; align-items: center; gap: 13px; padding: 17px 16px 17px 19px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.025); cursor: pointer; transition: border-color 150ms ease, background 150ms ease; }
-.service-row:hover, .service-row:focus-within, .service-row:has(input:checked) { border-color: rgba(203, 212, 129, 0.72); background: rgba(165, 171, 100, 0.08); }
-.service-row input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.checkbox-indicator { display: grid; flex: 0 0 20px; place-items: center; width: 20px; height: 20px; border: 1px solid rgba(217, 217, 217, 0.38); border-radius: 5px; background: var(--ink); }
-.radio-indicator { border-radius: 50%; }
-.service-row input:focus-visible + .checkbox-indicator { outline: 3px solid rgba(203, 212, 129, 0.5); outline-offset: 3px; }
-.service-row input:checked + .checkbox-indicator { border-color: var(--accent-bright); background: var(--accent-bright); }
-.service-row input:checked + .checkbox-indicator::after { width: 8px; height: 4px; border-bottom: 2px solid var(--ink); border-left: 2px solid var(--ink); content: ""; transform: rotate(-45deg) translateY(-1px); }
-.service-row input:checked + .radio-indicator::after { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--ink); transform: none; }
+.service-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 16px 17px 19px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.025); transition: border-color 150ms ease, background 150ms ease; }
+.service-row:hover, .service-row:focus-within, .service-row.is-selected { border-color: rgba(203, 212, 129, 0.72); background: rgba(165, 171, 100, 0.08); }
+.service-name { min-width: 0; }
 .service-name h3 { margin: 0 0 4px; color: var(--text); font-size: 0.97rem; }
 .service-name p { margin: 0; color: var(--muted); font-size: 0.82rem; }
 .service-title { display: flex; align-items: center; gap: 8px; }
-.addon-badge { padding: 3px 6px; border: 1px solid rgba(165, 171, 100, 0.52); border-radius: 99px; color: var(--accent-bright); font-size: 0.61rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
-.service-action { margin-left: auto; color: var(--accent-bright); font-size: 0.77rem; font-weight: 800; }
-.quantity { display: grid; gap: 5px; color: var(--muted); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.07em; text-align: right; text-transform: uppercase; }
-.quantity input { width: 86px; padding: 10px; border: 1px solid rgba(217, 217, 217, 0.28); border-radius: 8px; outline: none; color: var(--text); background: var(--ink); font-size: 1rem; font-weight: 700; text-align: center; }
-.quantity input:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px rgba(165, 171, 100, 0.17); }
+.included-badge { flex: 0 0 auto; padding: 3px 6px; border: 1px solid rgba(165, 171, 100, 0.52); border-radius: 99px; color: var(--accent-bright); font-size: 0.61rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+.quantity-control { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.quantity-button { display: grid; place-items: center; width: 31px; height: 31px; padding: 0; border: 1px solid rgba(217, 217, 217, 0.32); border-radius: 50%; color: var(--text); background: var(--ink); cursor: pointer; font-size: 1.23rem; font-weight: 700; line-height: 1; transition: border-color 150ms ease, color 150ms ease, background 150ms ease; }
+.quantity-button:hover:not(:disabled) { border-color: var(--accent-bright); color: var(--ink); background: var(--accent-bright); }
+.quantity-button:focus-visible { outline: 3px solid rgba(203, 212, 129, 0.5); outline-offset: 2px; }
+.quantity-button:disabled { cursor: not-allowed; opacity: 0.35; }
+.quantity-value { display: grid; place-items: center; width: 22px; color: var(--text); font-size: 1.05rem; font-weight: 900; font-variant-numeric: tabular-nums; text-align: center; }
+.discount-progress { margin: 17px 0 0; color: var(--accent-bright); font-size: 0.84rem; font-weight: 700; }
+.service-guidance { margin: 13px 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.5; }
+.service-guidance strong { color: var(--text); }
 
 .client-section { padding-bottom: 0; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
 label { display: grid; gap: 8px; color: var(--text); font-size: 0.82rem; font-weight: 700; }
-input:not(.quantity input), textarea { width: 100%; border: 1px solid rgba(217, 217, 217, 0.25); border-radius: 10px; outline: none; padding: 13px 14px; color: var(--text); background: rgba(8, 9, 11, 0.48); transition: border-color 150ms ease, box-shadow 150ms ease; }
-input:not(.quantity input):focus, textarea:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px rgba(165, 171, 100, 0.16); }
+.input-grid input, textarea { width: 100%; border: 1px solid rgba(217, 217, 217, 0.25); border-radius: 10px; outline: none; padding: 13px 14px; color: var(--text); background: rgba(8, 9, 11, 0.48); transition: border-color 150ms ease, box-shadow 150ms ease; }
+.input-grid input:focus, textarea:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px rgba(165, 171, 100, 0.16); }
 textarea { resize: vertical; min-height: 124px; line-height: 1.5; }
 .project-details { margin-top: 16px; }
 .project-details small { color: var(--muted); font-size: 0.72rem; font-weight: 400; text-align: right; }
@@ -127,8 +120,9 @@ textarea { resize: vertical; min-height: 124px; line-height: 1.5; }
   .booking-card { padding: 29px 22px; border-radius: 28px; }
   .input-grid { grid-template-columns: 1fr; }
   .card-footer { flex-direction: column; }
-  .service-row { padding: 15px 13px 15px 15px; }
-  .song-count-control { margin-left: 0; }
+  .service-row { gap: 12px; padding: 15px 13px 15px 15px; }
   .custom-project { align-items: flex-start; flex-direction: column; }
-  .quantity input { width: 72px; }
+  .service-title { flex-wrap: wrap; }
+  .quantity-control { gap: 5px; }
+  .quantity-button { width: 29px; height: 29px; }
 }

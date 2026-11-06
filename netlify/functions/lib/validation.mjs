@@ -33,18 +33,14 @@ export function validatePurchase(payload) {
   }
 
   const items = payload.items.map((item) => {
-    if (!item || typeof item !== "object" || typeof item.id !== "string") {
+    if (!item || typeof item !== "object" || typeof item.id !== "string" || !Number.isSafeInteger(item.quantity)) {
       throw new RequestValidationError("Please choose your services again.");
     }
 
-    return { id: item.id };
+    return { id: item.id, quantity: item.quantity };
   });
 
-  if (!Number.isSafeInteger(payload.songCount)) {
-    throw new RequestValidationError("Song count must be a whole number.");
-  }
-
-  return { customerName, customerEmail, projectDetails, songCount: payload.songCount, items };
+  return { customerName, customerEmail, projectDetails, items };
 }
 
 /** Stripe allows a metadata value to contain up to 500 characters. */
