@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3a3a42" />
+    <meta name="description" content="Get an instant Mix Matrix project total and pay securely with Stripe." />
+    <title>Book a Project · The Mix Matrix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="booking-card" aria-labelledby="page-title">
+        <header class="brand-header">
+          <a class="brand" href="https://themixmatrix.carrd.co/" aria-label="Back to The Mix Matrix">
+            <span class="brand-mark" aria-hidden="true">MM</span>
+            <span>The Mix Matrix</span>
+          </a>
+          <p class="eyebrow">Instant project total</p>
+          <h1 id="page-title">Your sound, mapped out.</h1>
+          <p class="intro">Choose the services and track counts for your project. Your exact total is ready before secure Stripe Checkout.</p>
+        </header>
+
+        <noscript><p class="notice error">This calculator needs JavaScript enabled to create a secure Stripe checkout.</p></noscript>
+        <p id="load-message" class="notice" role="status">Loading services…</p>
+
+        <form id="booking-form" novalidate hidden>
+          <section class="form-section" aria-labelledby="services-heading">
+            <div class="section-heading">
+              <p class="step">01</p>
+              <div>
+                <h2 id="services-heading">Choose your services</h2>
+                <p>All pricing is shown per track.</p>
+              </div>
+            </div>
+            <div id="services" class="service-list" aria-live="polite"></div>
+          </section>
+
+          <section class="form-section client-section" aria-labelledby="details-heading">
+            <div class="section-heading">
+              <p class="step">02</p>
+              <div>
+                <h2 id="details-heading">Tell me about the project</h2>
+                <p>These details are attached securely to your Stripe payment.</p>
+              </div>
+            </div>
+            <div class="input-grid">
+              <label>
+                <span>Your name</span>
+                <input id="customer-name" name="customer-name" type="text" autocomplete="name" minlength="2" maxlength="120" required />
+              </label>
+              <label>
+                <span>Email for project updates</span>
+                <input id="customer-email" name="customer-email" type="email" autocomplete="email" maxlength="254" required />
+              </label>
+            </div>
+            <label class="project-details">
+              <span>Project details</span>
+              <textarea id="project-details" name="project-details" rows="5" minlength="3" maxlength="1500" required placeholder="Artist name, project title, references, deadline, and anything I should know."></textarea>
+              <small><span id="detail-count">0</span>/1500 characters</small>
+            </label>
+          </section>
+
+          <aside class="total-card" aria-labelledby="total-heading">
+            <div class="total-header">
+              <div>
+                <p class="step">03</p>
+                <h2 id="total-heading">Your project total</h2>
+              </div>
+              <p id="total" class="total" aria-live="polite">$0.00</p>
+            </div>
+            <div id="line-items" class="line-items"><p class="empty-state">Choose one or more services to see your itemized total.</p></div>
+            <div class="total-row"><span>Discounts</span><span>$0.00</span></div>
+            <div class="total-row grand-total"><span>Total due today</span><span id="total-copy">$0.00</span></div>
+            <p class="checkout-note">No bundle discounts or promo codes are applied. Prices are confirmed securely on the server before Stripe Checkout opens.</p>
+            <button id="checkout-button" class="checkout-button" type="submit" disabled>
+              Continue to secure payment <span aria-hidden="true">→</span>
+            </button>
+            <p id="form-message" class="form-message" role="alert" aria-live="assertive"></p>
+          </aside>
+        </form>
+
+        <footer class="card-footer">
+          <span>Secure payment by Stripe</span>
+          <a href="https://themixmatrix.carrd.co/">Return to The Mix Matrix</a>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>
