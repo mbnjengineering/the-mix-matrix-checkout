@@ -22,19 +22,34 @@
           </a>
           <p class="eyebrow">Instant project total</p>
           <h1 id="page-title">Your sound, mapped out.</h1>
-          <p class="intro">Choose the services and track counts for your project. Your exact total is ready before secure Stripe Checkout.</p>
+          <p class="intro">Set your song count, choose the services you need, and see your exact project total before secure Stripe Checkout.</p>
         </header>
 
         <noscript><p class="notice error">This calculator needs JavaScript enabled to create a secure Stripe checkout.</p></noscript>
         <p id="load-message" class="notice" role="status">Loading services…</p>
 
         <form id="booking-form" novalidate hidden>
-          <section class="form-section" aria-labelledby="services-heading">
+          <section class="form-section song-section" aria-labelledby="song-count-heading">
             <div class="section-heading">
               <p class="step">01</p>
               <div>
+                <h2 id="song-count-heading">How many songs?</h2>
+                <p>Volume discounts are based on the project’s song count.</p>
+              </div>
+            </div>
+            <label class="song-count-control" for="song-count">
+              <span>Project songs</span>
+              <input id="song-count" name="song-count" type="number" inputmode="numeric" min="1" max="99" step="1" value="1" required />
+              <small>3–4 songs: 5% off · 5+ songs: 15% off</small>
+            </label>
+          </section>
+
+          <section class="form-section" aria-labelledby="services-heading">
+            <div class="section-heading">
+              <p class="step">02</p>
+              <div>
                 <h2 id="services-heading">Choose your services</h2>
-                <p>All pricing is shown per track.</p>
+                <p>All pricing is shown per song. Add mastering whenever you need it.</p>
               </div>
             </div>
             <div id="services" class="service-list" aria-live="polite"></div>
@@ -42,7 +57,7 @@
 
           <section class="form-section client-section" aria-labelledby="details-heading">
             <div class="section-heading">
-              <p class="step">02</p>
+              <p class="step">03</p>
               <div>
                 <h2 id="details-heading">Tell me about the project</h2>
                 <p>These details are attached securely to your Stripe payment.</p>
@@ -68,19 +83,28 @@
           <aside class="total-card" aria-labelledby="total-heading">
             <div class="total-header">
               <div>
-                <p class="step">03</p>
+                <p class="step">04</p>
                 <h2 id="total-heading">Your project total</h2>
               </div>
               <p id="total" class="total" aria-live="polite">$0.00</p>
             </div>
             <div id="line-items" class="line-items"><p class="empty-state">Choose one or more services to see your itemized total.</p></div>
-            <div class="total-row"><span>Discounts</span><span>$0.00</span></div>
+            <div class="total-row"><span id="discount-label">Volume discount</span><span id="discount">$0.00</span></div>
             <div class="total-row grand-total"><span>Total due today</span><span id="total-copy">$0.00</span></div>
-            <p class="checkout-note">No bundle discounts or promo codes are applied. Prices are confirmed securely on the server before Stripe Checkout opens.</p>
+            <p class="checkout-note">Prices and volume discounts are confirmed securely on the server before Stripe Checkout opens.</p>
             <button id="checkout-button" class="checkout-button" type="submit" disabled>
               Continue to secure payment <span aria-hidden="true">→</span>
             </button>
             <p id="form-message" class="form-message" role="alert" aria-live="assertive"></p>
+          </aside>
+
+          <aside class="custom-project" aria-labelledby="custom-project-heading">
+            <div>
+              <p class="step">Custom project?</p>
+              <h2 id="custom-project-heading">Need a custom rate or a larger scope?</h2>
+              <p>Send a project note first. Custom work is quoted directly rather than charged at an unapproved amount.</p>
+            </div>
+            <a id="custom-project-link" class="quote-link" href="mailto:mbnj.engineering@gmail.com?subject=Custom%20project%20quote">Request a custom quote <span aria-hidden="true">→</span></a>
           </aside>
         </form>
 

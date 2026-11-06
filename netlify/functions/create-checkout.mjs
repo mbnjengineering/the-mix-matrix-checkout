@@ -23,7 +23,10 @@ function metadataFor(purchase, quote) {
   return {
     customer_name: purchase.customerName,
     customer_email: purchase.customerEmail,
+    song_count: String(quote.songCount),
     services: quote.lineItems.map((item) => `${item.name} x${item.quantity}`).join(" | "),
+    discount_percent: String(quote.discountPercent),
+    discount_usd: (quote.discountCents / 100).toFixed(2),
     total_usd: (quote.totalCents / 100).toFixed(2),
     ...projectDetailMetadata(purchase.projectDetails)
   };
@@ -41,7 +44,7 @@ export async function handler(event) {
   try {
     const payload = JSON.parse(event.body || "{}");
     const purchase = validatePurchase(payload);
-    const quote = quoteFor(purchase.items);
+    const quote = quoteFor({ requestedItems: purchase.items, songCount: purchase.songCount });
     const metadata = metadataFor(purchase, quote);
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const siteUrl = publicSiteUrl(event);
@@ -56,10 +59,14 @@ export async function handler(event) {
         quantity: item.quantity,
         price_data: {
           currency: quote.currency,
-          unit_amount: item.unitAmountCents,
+          // The approved volume discount is applied here on the server, so the
+          // Checkout total cannot be changed by the browser.
+          unit_amount: Math.round(item.unitAmountCents * (100 - quote.discountPercent) / 100),
           product_data: {
             name: item.name,
-            description: item.unitLabel
+            description: quote.discountPercent > 0
+              ? `${item.unitLabel}; ${quote.discountPercent}% volume discount included`
+              : item.unitLabel
           }
         }
       })),

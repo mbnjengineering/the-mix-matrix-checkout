@@ -4,31 +4,38 @@
  * To change a price, edit unitAmountCents here and publish a new deploy.
  */
 export const CURRENCY = "usd";
+export const CUSTOM_PROJECT_EMAIL = "mbnj.engineering@gmail.com";
+
+export const DISCOUNT_TIERS = Object.freeze([
+  { minSongs: 5, percent: 15 },
+  { minSongs: 3, percent: 5 }
+]);
 
 export const SERVICES = Object.freeze([
   {
     id: "multitrack-stem-mixing",
     name: "Multi track/Stem mixing",
     unitAmountCents: 30000,
-    unitLabel: "per track"
+    unitLabel: "per song"
   },
   {
     id: "2track-mixing",
     name: "2track mixing",
     unitAmountCents: 30000,
-    unitLabel: "per track"
+    unitLabel: "per song"
   },
   {
     id: "mastering",
-    name: "Mastering",
+    name: "Add mastering",
     unitAmountCents: 5000,
-    unitLabel: "per track"
+    unitLabel: "per song",
+    isAddOn: true
   },
   {
     id: "dolby-atmos",
     name: "Dolby-Atmos",
     unitAmountCents: 30000,
-    unitLabel: "per track"
+    unitLabel: "per song"
   }
 ]);
 
@@ -37,13 +44,15 @@ const serviceById = new Map(SERVICES.map((service) => [service.id, service]));
 export function publicCatalog() {
   return {
     currency: CURRENCY,
-    services: SERVICES.map(({ id, name, unitAmountCents, unitLabel }) => ({
+    services: SERVICES.map(({ id, name, unitAmountCents, unitLabel, isAddOn = false }) => ({
       id,
       name,
       unitAmountCents,
-      unitLabel
+      unitLabel,
+      isAddOn
     })),
-    discounts: []
+    discounts: DISCOUNT_TIERS,
+    customProjectEmail: CUSTOM_PROJECT_EMAIL
   };
 }
 
@@ -51,33 +60,32 @@ export function publicCatalog() {
  * Rebuilds every line item from the authoritative catalog. Client-supplied
  * amounts, totals, and labels are intentionally ignored.
  */
-export function quoteFor(requestedItems) {
-  const quantities = new Map();
+export function quoteFor({ requestedItems, songCount }) {
+  if (!Number.isSafeInteger(songCount) || songCount < 1 || songCount > 99) {
+    throw new Error("Song count must be a whole number from 1 to 99.");
+  }
+
+  const selectedServiceIds = new Set();
 
   for (const item of requestedItems) {
     if (!serviceById.has(item.id)) {
       throw new Error("An unavailable service was selected.");
     }
 
-    if (!Number.isSafeInteger(item.quantity) || item.quantity < 0 || item.quantity > 99) {
-      throw new Error("Each service quantity must be a whole number from 0 to 99.");
-    }
-
-    if (quantities.has(item.id)) {
+    if (selectedServiceIds.has(item.id)) {
       throw new Error("Each service can only be sent once.");
     }
 
-    quantities.set(item.id, item.quantity);
+    selectedServiceIds.add(item.id);
   }
 
   const lineItems = SERVICES.flatMap((service) => {
-    const quantity = quantities.get(service.id) ?? 0;
-    if (quantity === 0) return [];
+    if (!selectedServiceIds.has(service.id)) return [];
 
     return [{
       ...service,
-      quantity,
-      amountCents: service.unitAmountCents * quantity
+      quantity: songCount,
+      amountCents: service.unitAmountCents * songCount
     }];
   });
 
@@ -86,12 +94,17 @@ export function quoteFor(requestedItems) {
   }
 
   const subtotalCents = lineItems.reduce((sum, item) => sum + item.amountCents, 0);
+  const discount = DISCOUNT_TIERS.find((tier) => songCount >= tier.minSongs);
+  const discountPercent = discount?.percent ?? 0;
+  const discountCents = Math.round(subtotalCents * discountPercent / 100);
 
   return {
     currency: CURRENCY,
+    songCount,
     lineItems,
     subtotalCents,
-    discountCents: 0,
-    totalCents: subtotalCents
+    discountPercent,
+    discountCents,
+    totalCents: subtotalCents - discountCents
   };
 }

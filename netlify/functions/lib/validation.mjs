@@ -37,10 +37,14 @@ export function validatePurchase(payload) {
       throw new RequestValidationError("Please choose your services again.");
     }
 
-    return { id: item.id, quantity: item.quantity };
+    return { id: item.id };
   });
 
-  return { customerName, customerEmail, projectDetails, items };
+  if (!Number.isSafeInteger(payload.songCount)) {
+    throw new RequestValidationError("Song count must be a whole number.");
+  }
+
+  return { customerName, customerEmail, projectDetails, songCount: payload.songCount, items };
 }
 
 /** Stripe allows a metadata value to contain up to 500 characters. */
