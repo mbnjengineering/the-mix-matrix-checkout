@@ -16,26 +16,31 @@ export const SERVICES = Object.freeze([
     id: "multitrack-stem-mixing",
     name: "Multi track/Stem mixing",
     unitAmountCents: 30000,
-    unitLabel: "per song"
+    unitLabel: "per song",
+    selectionType: "primary"
   },
   {
     id: "2track-mixing",
     name: "2track mixing",
-    unitAmountCents: 30000,
-    unitLabel: "per song"
+    unitAmountCents: 17500,
+    unitLabel: "per song",
+    selectionType: "primary"
   },
   {
     id: "mastering",
     name: "Add mastering",
     unitAmountCents: 5000,
     unitLabel: "per song",
-    isAddOn: true
+    isAddOn: true,
+    selectionType: "addon"
   },
   {
     id: "dolby-atmos",
     name: "Dolby-Atmos",
     unitAmountCents: 30000,
-    unitLabel: "per song"
+    unitLabel: "per song",
+    isAddOn: true,
+    selectionType: "addon"
   }
 ]);
 
@@ -44,12 +49,13 @@ const serviceById = new Map(SERVICES.map((service) => [service.id, service]));
 export function publicCatalog() {
   return {
     currency: CURRENCY,
-    services: SERVICES.map(({ id, name, unitAmountCents, unitLabel, isAddOn = false }) => ({
+    services: SERVICES.map(({ id, name, unitAmountCents, unitLabel, isAddOn = false, selectionType }) => ({
       id,
       name,
       unitAmountCents,
       unitLabel,
-      isAddOn
+      isAddOn,
+      selectionType
     })),
     discounts: DISCOUNT_TIERS,
     customProjectEmail: CUSTOM_PROJECT_EMAIL
@@ -91,6 +97,10 @@ export function quoteFor({ requestedItems, songCount }) {
 
   if (lineItems.length === 0) {
     throw new Error("Choose at least one service before checkout.");
+  }
+
+  if (lineItems.filter((item) => item.selectionType === "primary").length > 1) {
+    throw new Error("Choose only one primary mix type per project.");
   }
 
   const subtotalCents = lineItems.reduce((sum, item) => sum + item.amountCents, 0);

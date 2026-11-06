@@ -40,7 +40,7 @@
             <label class="song-count-control" for="song-count">
               <span>Project songs</span>
               <input id="song-count" name="song-count" type="number" inputmode="numeric" min="1" max="99" step="1" value="1" required />
-              <small>3–4 songs: 5% off · 5+ songs: 15% off</small>
+              <small id="discount-progress" aria-live="polite">Add 2 more songs to unlock 5% off.</small>
             </label>
           </section>
 
@@ -48,16 +48,27 @@
             <div class="section-heading">
               <p class="step">02</p>
               <div>
-                <h2 id="services-heading">Choose your services</h2>
-                <p>All pricing is shown per song. Add mastering whenever you need it.</p>
+                <h2 id="services-heading">Choose your mix</h2>
+                <p>Pick one mix type, or skip this step for a mastering- or Dolby-only project.</p>
               </div>
             </div>
-            <div id="services" class="service-list" aria-live="polite"></div>
+            <div id="primary-services" class="service-list" aria-live="polite"></div>
+          </section>
+
+          <section class="form-section" aria-labelledby="addons-heading">
+            <div class="section-heading">
+              <p class="step">03</p>
+              <div>
+                <h2 id="addons-heading">Add-ons</h2>
+                <p>Add mastering and/or Dolby Atmos to every project song—or book either one by itself.</p>
+              </div>
+            </div>
+            <div id="addon-services" class="service-list" aria-live="polite"></div>
           </section>
 
           <section class="form-section client-section" aria-labelledby="details-heading">
             <div class="section-heading">
-              <p class="step">03</p>
+              <p class="step">04</p>
               <div>
                 <h2 id="details-heading">Tell me about the project</h2>
                 <p>These details are attached securely to your Stripe payment.</p>
@@ -83,7 +94,7 @@
           <aside class="total-card" aria-labelledby="total-heading">
             <div class="total-header">
               <div>
-                <p class="step">04</p>
+                <p class="step">05</p>
                 <h2 id="total-heading">Your project total</h2>
               </div>
               <p id="total" class="total" aria-live="polite">$0.00</p>

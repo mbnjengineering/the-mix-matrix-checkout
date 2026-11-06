@@ -1,7 +1,9 @@
 const form = document.querySelector("#booking-form");
-const servicesElement = document.querySelector("#services");
+const primaryServicesElement = document.querySelector("#primary-services");
+const addonServicesElement = document.querySelector("#addon-services");
 const loadMessage = document.querySelector("#load-message");
 const songCountField = document.querySelector("#song-count");
+const discountProgress = document.querySelector("#discount-progress");
 const lineItemsElement = document.querySelector("#line-items");
 const totalElement = document.querySelector("#total");
 const totalCopyElement = document.querySelector("#total-copy");
@@ -32,47 +34,75 @@ function discountFor(currentSongCount) {
   return catalog.discounts.find((tier) => currentSongCount >= tier.minSongs) || { percent: 0 };
 }
 
-function renderServices() {
-  servicesElement.replaceChildren();
-  for (const service of catalog.services) {
-    const row = document.createElement("label");
-    row.className = "service-row";
+function updateDiscountProgress(currentSongCount) {
+  if (currentSongCount < 3) {
+    const remaining = 3 - currentSongCount;
+    discountProgress.textContent = `Add ${remaining} more ${remaining === 1 ? "song" : "songs"} to unlock 5% off.`;
+  } else if (currentSongCount < 5) {
+    const remaining = 5 - currentSongCount;
+    discountProgress.textContent = `5% off unlocked. Add ${remaining} more ${remaining === 1 ? "song" : "songs"} to unlock 15% off.`;
+  } else {
+    discountProgress.textContent = "15% volume discount unlocked.";
+  }
+}
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.dataset.service = service.id;
-    checkbox.setAttribute("aria-label", `Add ${service.name}`);
+function createServiceCard(service) {
+  const row = document.createElement("label");
+  row.className = "service-row";
 
-    const indicator = document.createElement("span");
-    indicator.className = "checkbox-indicator";
-    indicator.setAttribute("aria-hidden", "true");
+  const selector = document.createElement("input");
+  selector.type = service.selectionType === "primary" ? "radio" : "checkbox";
+  if (service.selectionType === "primary") selector.name = "primary-mix";
+  selector.dataset.service = service.id;
+  selector.setAttribute("aria-label", `${service.selectionType === "primary" ? "Choose" : "Add"} ${service.name}`);
 
-    const name = document.createElement("div");
-    name.className = "service-name";
-    const titleLine = document.createElement("div");
-    titleLine.className = "service-title";
-    const title = document.createElement("h3");
-    title.textContent = service.name;
-    titleLine.append(title);
-    if (service.isAddOn) {
-      const badge = document.createElement("span");
-      badge.className = "addon-badge";
-      badge.textContent = "Add-on";
-      titleLine.append(badge);
+  const indicator = document.createElement("span");
+  indicator.className = `checkbox-indicator ${service.selectionType === "primary" ? "radio-indicator" : ""}`;
+  indicator.setAttribute("aria-hidden", "true");
+
+  const name = document.createElement("div");
+  name.className = "service-name";
+  const titleLine = document.createElement("div");
+  titleLine.className = "service-title";
+  const title = document.createElement("h3");
+  title.textContent = service.name;
+  titleLine.append(title);
+  if (service.isAddOn) {
+    const badge = document.createElement("span");
+    badge.className = "addon-badge";
+    badge.textContent = "Add-on";
+    titleLine.append(badge);
+  }
+  const rate = document.createElement("p");
+  rate.textContent = `${money(service.unitAmountCents)} ${service.unitLabel}`;
+  name.append(titleLine, rate);
+
+  const action = document.createElement("span");
+  action.className = "service-action";
+  action.textContent = service.selectionType === "primary" ? "Choose" : "Add";
+
+  selector.addEventListener("change", () => {
+    if (service.selectionType === "primary") {
+      for (const primary of catalog.services.filter((item) => item.selectionType === "primary")) {
+        const primaryAction = document.querySelector(`[data-service="${primary.id}"]`).closest("label").querySelector(".service-action");
+        primaryAction.textContent = document.querySelector(`[data-service="${primary.id}"]`).checked ? "Chosen" : "Choose";
+      }
+    } else {
+      action.textContent = selector.checked ? "Added" : "Add";
     }
-    const rate = document.createElement("p");
-    rate.textContent = `${money(service.unitAmountCents)} ${service.unitLabel}`;
-    name.append(titleLine, rate);
+    updateQuote();
+  });
 
-    const action = document.createElement("span");
-    action.className = "service-action";
-    action.textContent = "Add";
-    checkbox.addEventListener("change", () => {
-      action.textContent = checkbox.checked ? "Added" : "Add";
-      updateQuote();
-    });
-    row.append(checkbox, indicator, name, action);
-    servicesElement.append(row);
+  row.append(selector, indicator, name, action);
+  return row;
+}
+
+function renderServices() {
+  primaryServicesElement.replaceChildren();
+  addonServicesElement.replaceChildren();
+  for (const service of catalog.services) {
+    const card = createServiceCard(service);
+    (service.selectionType === "primary" ? primaryServicesElement : addonServicesElement).append(card);
   }
 }
 
@@ -85,6 +115,7 @@ function updateQuote() {
   const total = subtotal - discountCents;
   const hasItems = items.length > 0;
 
+  updateDiscountProgress(currentSongCount);
   totalElement.textContent = money(total);
   totalCopyElement.textContent = money(total);
   discountElement.textContent = discountCents > 0 ? `−${money(discountCents)}` : "$0.00";
@@ -97,7 +128,7 @@ function updateQuote() {
   if (!hasItems) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "Add one or more services to see your itemized total.";
+    empty.textContent = "Choose a mix, an add-on, or both to see your itemized total.";
     lineItemsElement.append(empty);
     return;
   }

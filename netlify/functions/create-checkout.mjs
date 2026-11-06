@@ -90,7 +90,8 @@ export async function handler(event) {
     if (error instanceof Error && (
       error.message.includes("Choose at least one") ||
       error.message.includes("unavailable service") ||
-      error.message.includes("quantity") ||
+      error.message.includes("Song count") ||
+      error.message.includes("primary mix type") ||
       error.message.includes("only be sent once")
     )) {
       return reply(400, { error: error.message });

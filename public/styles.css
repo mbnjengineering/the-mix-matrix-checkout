@@ -71,9 +71,11 @@ form { margin-top: 39px; }
 .service-row:hover, .service-row:focus-within, .service-row:has(input:checked) { border-color: rgba(203, 212, 129, 0.72); background: rgba(165, 171, 100, 0.08); }
 .service-row input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .checkbox-indicator { display: grid; flex: 0 0 20px; place-items: center; width: 20px; height: 20px; border: 1px solid rgba(217, 217, 217, 0.38); border-radius: 5px; background: var(--ink); }
+.radio-indicator { border-radius: 50%; }
 .service-row input:focus-visible + .checkbox-indicator { outline: 3px solid rgba(203, 212, 129, 0.5); outline-offset: 3px; }
 .service-row input:checked + .checkbox-indicator { border-color: var(--accent-bright); background: var(--accent-bright); }
 .service-row input:checked + .checkbox-indicator::after { width: 8px; height: 4px; border-bottom: 2px solid var(--ink); border-left: 2px solid var(--ink); content: ""; transform: rotate(-45deg) translateY(-1px); }
+.service-row input:checked + .radio-indicator::after { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--ink); transform: none; }
 .service-name h3 { margin: 0 0 4px; color: var(--text); font-size: 0.97rem; }
 .service-name p { margin: 0; color: var(--muted); font-size: 0.82rem; }
 .service-title { display: flex; align-items: center; gap: 8px; }
